@@ -58,8 +58,8 @@
 #import <SalesforceSDKCore/SFKeychainItemWrapper.h>
 #import <SalesforceSDKCommon/SFSDKDataSharingHelper.h>
 
-#include "cqlrt.c"
-#include "smartstoreperf.c"
+#include "cqlrt_c.h"
+#include "smartstoreperf_c.h"
 
 static NSMutableDictionary *_allSharedStores;
 static NSMutableDictionary *_allGlobalSharedStores;

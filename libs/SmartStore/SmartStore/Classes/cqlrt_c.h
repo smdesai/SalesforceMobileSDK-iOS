@@ -205,4 +205,4 @@ cql_bool cql_ref_equal(cql_type_ref typeref1, cql_type_ref typeref2) {
   return cql_blob_equal((cql_blob_ref)typeref1, (cql_blob_ref)typeref2);
 }
 
-#include "cqlrt_common.c"
+#include "cqlrt_common_c.h"
