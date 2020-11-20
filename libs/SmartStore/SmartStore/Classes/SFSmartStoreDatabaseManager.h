@@ -164,6 +164,8 @@ NS_SWIFT_NAME(DatabaseManager)
  */
 - (NSString*)fullDbFilePathForStoreName:(NSString*)storeName;
 
+- (NSString*)storeDirectoryForStoreName:(NSString *)storeName;
+
 /**
  Verifies that the database contents for the given DB can be read.
  @param dbPath The instance of the database to read.

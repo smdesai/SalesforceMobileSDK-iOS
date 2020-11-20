@@ -1,6 +1,6 @@
 /*
  Copyright (c) 2011-present, salesforce.com, inc. All rights reserved.
- 
+
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
  * Redistributions of source code must retain the above copyright notice, this list of conditions
@@ -11,7 +11,7 @@
  * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
  endorse or promote products derived from this software without specific prior written
  permission of salesforce.com, inc.
- 
+
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -141,7 +141,7 @@ NS_SWIFT_NAME(SmartStore)
     BOOL    _dataProtectionKnownAvailable;
     id      _dataProtectAvailObserverToken;
     id      _dataProtectUnavailObserverToken;
-    
+
     FMDatabaseQueue *_storeQueue;
     NSString *_storeName;
 
@@ -151,8 +151,17 @@ NS_SWIFT_NAME(SmartStore)
     SFSmartSqlCache *_smartSqlToSql;
 }
 
+@property (nonatomic, readonly) BOOL extJSONStream NS_SWIFT_NAME(extJSONStream);
+@property (nonatomic, readonly) BOOL extJSONMemory NS_SWIFT_NAME(extJSONMemory);
+@property (nonatomic, readonly) BOOL smartStoreSFJSONUtils NS_SWIFT_NAME(smartStoreSFJSONUtils);
+@property (nonatomic, readonly) BOOL smartStoreNSJSONSerialize NS_SWIFT_NAME(smartStoreNSJSONSerialize);
+@property (nonatomic, readonly) BOOL rawSQLite NS_SWIFT_NAME(rawSQLite);
+
+@property (nonatomic, readonly) NSInteger payloadSize NS_SWIFT_NAME(payloadSize);
+
+
 /**
- The name of this store. 
+ The name of this store.
  */
 @property (nonatomic, readonly, strong) NSString *storeName NS_SWIFT_NAME(name);
 
@@ -199,7 +208,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Use this method to obtain a shared store instance with a particular name for the current user.
- 
+
  @param storeName The name of the store.  If in doubt, use kDefaultSmartStoreName.
  @return A shared instance of a store with the given name.
  */
@@ -222,8 +231,8 @@ NS_SWIFT_NAME(SmartStore)
 /**
  You may use this method to completely remove a persistent shared store with
  the given name for the current user.
- 
- @param storeName The name of the store. 
+
+ @param storeName The name of the store.
  */
 + (void)removeSharedStoreWithName:(NSString *)storeName NS_SWIFT_NAME(removeShared(withName:));
 
@@ -259,14 +268,14 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Sets a custom block for deriving the encryption key used to encrypt stores.
- 
+
  ** WARNING: **
  If you choose to override the encryption key derivation, you must set
  this value before opening any stores.  Setting the value after stores have been opened
  will result in the corruption and loss of existing data.
  Also, SmartStore does not use initialization vectors.
  ** WARNING **
- 
+
  @param newEncryptionKeyBlock The new encryption key derivation block to use with SmartStore.
  */
 + (void)setEncryptionKeyBlock:(SFSmartStoreEncryptionKeyBlock)newEncryptionKeyBlock;
@@ -313,7 +322,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Creates a new soup or confirms the existence of an existing soup.
- 
+
  @param soupSpec Soup specs of the soup to register.
  @param indexSpecs Array of one or more SFSoupIndex objects.
  @param error Sets/returns any error generated as part of the process.
@@ -324,7 +333,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Get the number of entries that would be returned with the given query spec
- 
+
  @param querySpec A native query spec.
  @param error Sets/returns any error generated as part of the process.
  */
@@ -332,23 +341,23 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Search for entries matching the given query spec.
- 
+
  @param querySpec A native query spec.
  @param pageIndex The page index to start the entries at (this supports paging).
  @param error Sets/returns any error generated as part of the process.
- 
+
  @return A set of entries given the pageSize provided in the querySpec.
  */
 - (NSArray * __nullable)queryWithQuerySpec:(SFQuerySpec *)querySpec pageIndex:(NSUInteger)pageIndex error:(NSError **)error NS_SWIFT_NAME(query(using:startingFromPageIndex:));
 
 /**
  Search for entries matching the given query spec without deserializing any JSON
- 
+
  @param resultString A mutable string to which the result (serialized) is appended
  @param querySpec A native query spec.
  @param pageIndex The page index to start the entries at (this supports paging).
  @param error Sets/returns any error generated as part of the process.
- 
+
  @return YES if successful
  */
 - (BOOL) queryAsString:(NSMutableString*)resultString querySpec:(SFQuerySpec *)querySpec pageIndex:(NSUInteger)pageIndex error:(NSError **)error NS_SWIFT_UNAVAILABLE("Use query(querySpec:pageIndex:) in native applications");
@@ -369,10 +378,10 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Search soup for entries exactly matching the soup entry IDs.
- 
+
  @param soupName The name of the soup to query.
  @param soupEntryIds An array of opaque soup entry IDs.
- 
+
  @return An array with zero or more entries matching the input IDs. Order is not guaranteed.
  */
 - (NSArray<NSDictionary*>*)retrieveEntries:(NSArray<NSNumber*>*)soupEntryIds fromSoup:(NSString*)soupName NS_SWIFT_NAME(retrieve(usingSoupEntryIds:fromSoupNamed:));
@@ -381,10 +390,10 @@ NS_SWIFT_NAME(SmartStore)
  Insert/update entries to the soup.  Insert vs. update will be determined by the internal
  soup entry ID generated from intial entry.  If you want to specify a different identifier
  for determining existing entries, use upsertEntries:toSoup:withExternalIdPath:
- 
+
  @param entries The entries to insert or update.
  @param soupName The name of the soup to update.
- 
+
  @return The array of updated entries in the soup.
  */
 - (NSArray<NSDictionary*>*)upsertEntries:(NSArray<NSDictionary*>*)entries toSoup:(NSString*)soupName NS_SWIFT_NAME(upsert(entries:forSoupNamed:));
@@ -392,19 +401,19 @@ NS_SWIFT_NAME(SmartStore)
 /**
  Insert/update entries to the soup.  Insert vs. update will be determined by the specified
  external ID path argument.
- 
+
  @param entries The entries to insert or update.
  @param soupName The name of the soup to update.
  @param externalIdPath The user-defined query spec path used to determine insert vs. update.
  @param error Sets/returns any error generated as part of the process.
- 
+
  @return The array of updated entries in the soup.
  */
 - (NSArray * _Nullable)upsertEntries:(NSArray *)entries toSoup:(NSString *)soupName withExternalIdPath:(NSString *)externalIdPath error:(NSError **)error  NS_SWIFT_NAME(upsert(entries:forSoupNamed:withExternalIdPath:));
 
 /**
  Look up the ID for an entry in a soup.
- 
+
  @param soupName Soup name.
  @param fieldPath Field path.
  @param fieldValue Field value.
@@ -418,7 +427,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Remove soup entries exactly matching the soup entry IDs.
- 
+
  @param entryIds An array of opaque soup entry IDs from _soupEntryId.
  @param soupName The name of the soup from which to remove the soup entries.
  @param error Sets/returns any error generated as part of the process.
@@ -456,14 +465,14 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Remove all elements from soup.
- 
+
  @param soupName The name of the soup to clear.
  */
 - (void)clearSoup:(NSString*)soupName;
 
 /**
  Remove soup completely from the store.
- 
+
  @param soupName The name of the soup to remove from the store.
  */
 - (void)removeSoup:(NSString*)soupName;
@@ -481,7 +490,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Returns sum of all external file sizes for a given soup.
- 
+
  @param soupName Name of the soup.
  @return External file storage size, in bytes.
  */
@@ -489,7 +498,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Return the number of external storage files for a given soup.
- 
+
  @param soupName The name of the soup.
  @return Number of external files.
  */
@@ -507,7 +516,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Alter soup indexes.
- 
+
  @param soupName The name of the soup to alter.
  @param soupSpec The new soup spec to convert. (e.g. convert internal storage soup to external storage soup).
  @param indexSpecs Array of one ore more SFSoupIndex objects to replace existing index specs.
@@ -519,7 +528,7 @@ NS_SWIFT_NAME(SmartStore)
 
 /**
  Reindex a soup.
- 
+
  @param soupName The name of the soup to alter.
  @param indexPaths Array of on ore more paths to be reindexed.
  @return YES if soup reindexing succeeded.
@@ -558,7 +567,7 @@ NS_SWIFT_NAME(SmartStore)
  This property is updated when notifications are received for
  UIApplicationProtectedDataDidBecomeAvailable and UIApplicationProtectedDataWillBecomeUnavailable events.
  Note that on the simulator currently, data protection is NEVER active.
- 
+
  @return YES if file data protection (full passcode-based encryption) is available.
  */
 - (BOOL)isFileDataProtectionActive;
@@ -576,6 +585,10 @@ NS_SWIFT_NAME(SmartStore)
  @return The NSDate representation of the last modified date.
  */
 + (NSDate *)dateFromLastModifiedValue:(NSNumber *)lastModifiedValue NS_SWIFT_NAME(date(lastModifiedValue:));
+
+-(void) resetPerfDb;
+
+-(void) dumpPerfDb;
 
 @end
 

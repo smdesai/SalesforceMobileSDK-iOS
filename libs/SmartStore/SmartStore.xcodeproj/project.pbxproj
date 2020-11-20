@@ -49,6 +49,9 @@
 		4FEE448A1BFD5CE500F09C43 /* SFSmartStoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F96015E1BFD33B30022F021 /* SFSmartStoreTests.m */; };
 		4FF4DC671CF51D9300385C2C /* SFQuerySpecTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FF4DC661CF51D9300385C2C /* SFQuerySpecTests.m */; };
 		4FFEE6351BFE98E100B7AA8A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = CEAAAE61195911E600CBBFE9 /* InfoPlist.strings */; };
+		7BA1F5432567158A0009637D /* cqlrt_common.h in Headers */ = {isa = PBXBuildFile; fileRef = 7BA1F53D2567158A0009637D /* cqlrt_common.h */; };
+		7BA1F5462567158A0009637D /* cqlrt.h in Headers */ = {isa = PBXBuildFile; fileRef = 7BA1F5402567158A0009637D /* cqlrt.h */; };
+		7BA1F5762567219E0009637D /* smartstoreperf.h in Headers */ = {isa = PBXBuildFile; fileRef = 7BA1F5742567219E0009637D /* smartstoreperf.h */; };
 		828917841C52B705002F9981 /* FMDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = 8289177A1C52B705002F9981 /* FMDatabase.h */; };
 		828917851C52B705002F9981 /* FMDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = 8289177B1C52B705002F9981 /* FMDatabase.m */; };
 		828917861C52B705002F9981 /* FMDatabaseAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 8289177C1C52B705002F9981 /* FMDatabaseAdditions.h */; };
@@ -295,6 +298,9 @@
 		4FAB7D801F8D8C3C00226249 /* SFSDKStoreConfigTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SFSDKStoreConfigTests.m; sourceTree = "<group>"; };
 		4FF4DC661CF51D9300385C2C /* SFQuerySpecTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SFQuerySpecTests.m; sourceTree = "<group>"; };
 		4FFEE6341BFE98B600B7AA8A /* SmartStoreTests-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "SmartStoreTests-Info.plist"; path = "SmartStoreTests/SmartStoreTests-Info.plist"; sourceTree = SOURCE_ROOT; };
+		7BA1F53D2567158A0009637D /* cqlrt_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cqlrt_common.h; path = Classes/cqlrt_common.h; sourceTree = "<group>"; };
+		7BA1F5402567158A0009637D /* cqlrt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cqlrt.h; path = Classes/cqlrt.h; sourceTree = "<group>"; };
+		7BA1F5742567219E0009637D /* smartstoreperf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = smartstoreperf.h; path = Classes/smartstoreperf.h; sourceTree = "<group>"; };
 		8289177A1C52B705002F9981 /* FMDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabase.h; path = ../../../../external/fmdb/src/fmdb/FMDatabase.h; sourceTree = "<group>"; };
 		8289177B1C52B705002F9981 /* FMDatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FMDatabase.m; path = ../../../../external/fmdb/src/fmdb/FMDatabase.m; sourceTree = "<group>"; };
 		8289177C1C52B705002F9981 /* FMDatabaseAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FMDatabaseAdditions.h; path = ../../../../external/fmdb/src/fmdb/FMDatabaseAdditions.h; sourceTree = "<group>"; };
@@ -545,6 +551,9 @@
 		CEAAAE4A195911E600CBBFE9 /* SmartStore */ = {
 			isa = PBXGroup;
 			children = (
+				7BA1F5742567219E0009637D /* smartstoreperf.h */,
+				7BA1F53D2567158A0009637D /* cqlrt_common.h */,
+				7BA1F5402567158A0009637D /* cqlrt.h */,
 				829DA2A91C1266F70040F5F1 /* SmartStore.h */,
 				CEF50A79196B3EB60076264C /* Classes */,
 				CEAAAE4B195911E600CBBFE9 /* Supporting Files */,
@@ -653,6 +662,7 @@
 				8289178A1C52B705002F9981 /* FMDatabaseQueue.h in Headers */,
 				CE4CE4131C0E59DA009F6029 /* SFSmartStore+Internal.h in Headers */,
 				CE4CE4171C0E59DA009F6029 /* SFSmartStoreInspectorViewController.h in Headers */,
+				7BA1F5462567158A0009637D /* cqlrt.h in Headers */,
 				C03DE7D01D1B296400BFA6BD /* SFSoupSpec.h in Headers */,
 				CE4CE41E1C0E59DA009F6029 /* SFSoupIndex.h in Headers */,
 				CE4CE4161C0E59DA009F6029 /* SFSmartStoreDatabaseManager+Internal.h in Headers */,
@@ -662,6 +672,7 @@
 				CE4CE41B1C0E59DA009F6029 /* SFSmartStoreUpgrade+Internal.h in Headers */,
 				CE4CE40F1C0E59DA009F6029 /* SFSmartSqlHelper.h in Headers */,
 				829DA2AA1C1266F70040F5F1 /* SmartStore.h in Headers */,
+				7BA1F5762567219E0009637D /* smartstoreperf.h in Headers */,
 				CE4CE4111C0E59DA009F6029 /* SFSmartStore.h in Headers */,
 				4F883C761C16279F007D4BAE /* SmartStoreSDKManager.h in Headers */,
 				CE682C801F01B5E3003C43C0 /* SFSDKSmartStoreLogger.h in Headers */,
@@ -672,6 +683,7 @@
 				8289178C1C52B705002F9981 /* FMResultSet.h in Headers */,
 				CE4CE5691C0E7845009F6029 /* SmartStore-Prefix.pch in Headers */,
 				828917861C52B705002F9981 /* FMDatabaseAdditions.h in Headers */,
+				7BA1F5432567158A0009637D /* cqlrt_common.h in Headers */,
 				CE4CE40D1C0E59DA009F6029 /* SFQuerySpec.h in Headers */,
 				C03DE7D31D1B296400BFA6BD /* SFSoupSpec+Internal.h in Headers */,
 				CE4CE41C1C0E59DA009F6029 /* SFSmartStoreUtils.h in Headers */,
