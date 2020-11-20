@@ -924,13 +924,14 @@ SFSDK_USE_DEPRECATED_END
     [outputStream close];
 
     NSInteger externalWriteDelta = [self timeInMilliseconds] - startExternalWrite;
-
-    (void) add_marker(perfdb,
-                      (cql_int64) [self timeInMilliseconds],
-                      marker,
-                      (cql_int32) self.payloadSize,
-                      (cql_int32) externalWriteDelta);
-    cql_string_release(marker);
+    if (marker != NULL) {
+        (void) add_marker(perfdb,
+                          (cql_int64) [self timeInMilliseconds],
+                          marker,
+                          (cql_int32) self.payloadSize,
+                          (cql_int32) externalWriteDelta);
+        cql_string_release(marker);
+    }
 
     if (error) {
         [SFSmartStore buildEventOnJsonSerializationErrorForUser:self.user fromMethod:NSStringFromSelector(_cmd) error:error];
@@ -2199,8 +2200,6 @@ SFSDK_USE_DEPRECATED_END
                                     options:0
                                     error:&error];
             rawJson = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-        } else {
-            assert(false);
         }
         values[SOUP_COL] = rawJson;
     }
@@ -2219,12 +2218,14 @@ SFSDK_USE_DEPRECATED_END
         } else if (self.smartStoreNSJSONSerialize) {
             marker = cql_string_ref_new("SmartStore_NSJSONSerialization");
         }
-        (void) add_marker(perfdb,
-                          (cql_int64) [self timeInMilliseconds],
-                          marker,
-                          (cql_int32) self.payloadSize,
-                          (cql_int32) smartStoreWriteDelta);
-        cql_string_release(marker);
+        if (marker != NULL) {
+            (void) add_marker(perfdb,
+                              (cql_int64) [self timeInMilliseconds],
+                              marker,
+                              (cql_int32) self.payloadSize,
+                              (cql_int32) smartStoreWriteDelta);
+            cql_string_release(marker);
+        }
     }
 
     // external storage
