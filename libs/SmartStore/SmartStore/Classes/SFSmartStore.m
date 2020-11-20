@@ -23,6 +23,9 @@
  */
 
 //required for UIApplicationProtectedDataDidBecomeAvailable
+#import <mach/mach.h>
+#import <mach/mach_host.h>
+
 #import <UIKit/UIKit.h>
 #import "sqlite3.h"
 #import "FMDatabase.h"
@@ -139,6 +142,25 @@ NSUInteger CACHES_COUNT_LIMIT = 1024;
 
 @implementation SFSmartStore {
     sqlite3 *perfdb;
+}
+
+
+-(NSUInteger) freeMemory {
+    vm_size_t pagesize;
+    vm_statistics_data_t vm_stat;
+
+    mach_port_t host_port = mach_host_self();
+    mach_msg_type_number_t host_size = sizeof(vm_statistics_data_t) / sizeof(integer_t);
+
+    host_page_size(host_port, &pagesize);
+    if (host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &host_size) != KERN_SUCCESS) {
+        return 0;
+    }
+
+//    unsigned long mem_used = (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count) * pagesize;
+//    unsigned long mem_total = mem_used + mem_free;
+    unsigned long mem_free = vm_stat.free_count * pagesize;
+    return mem_free;
 }
 
 + (void)initialize
@@ -887,8 +909,6 @@ SFSDK_USE_DEPRECATED_END
     // Entry is written to tmp file first, then tmp file is renamed to make write closer to an atomic operation
     NSString *tmpFilePath = [NSString stringWithFormat:@"%@_tmp", filePath];
 
-    NSInteger startExternalWrite = [self timeInMilliseconds];
-
     // Setting up output stream
     NSOutputStream *outputStream = nil;
     SFSmartStoreEncryptionKeyBlock keyBlock = [SFSmartStore encryptionKeyBlock];
@@ -905,6 +925,8 @@ SFSDK_USE_DEPRECATED_END
     log(@"1/4 Starting to write to tmp file");
     [outputStream open];
     NSError *error = nil;
+
+    NSInteger startExternalWrite = [self timeInMilliseconds];
 
     cql_string_ref marker = NULL;
     if (self.extJSONStream) {
@@ -924,12 +946,12 @@ SFSDK_USE_DEPRECATED_END
     [outputStream close];
 
     NSInteger externalWriteDelta = [self timeInMilliseconds] - startExternalWrite;
-
     (void) add_marker(perfdb,
                       (cql_int64) [self timeInMilliseconds],
                       marker,
                       (cql_int32) self.payloadSize,
-                      (cql_int32) externalWriteDelta);
+                      (cql_int32) externalWriteDelta,
+                      [self freeMemory]);
     cql_string_release(marker);
 
     if (error) {
@@ -2155,7 +2177,8 @@ SFSDK_USE_DEPRECATED_END
                           (cql_int64) [self timeInMilliseconds],
                           cql_string_ref_new("SQLite"),
                           (cql_int32) self.payloadSize,
-                          (cql_int32) rawDbWriteDelta);
+                          (cql_int32) rawDbWriteDelta,
+                          [self freeMemory]);
         cql_string_release(marker);
 
         return entry;
@@ -2223,7 +2246,8 @@ SFSDK_USE_DEPRECATED_END
                           (cql_int64) [self timeInMilliseconds],
                           marker,
                           (cql_int32) self.payloadSize,
-                          (cql_int32) smartStoreWriteDelta);
+                          (cql_int32) smartStoreWriteDelta,
+                          [self freeMemory]);
         cql_string_release(marker);
     }
 
@@ -2806,13 +2830,14 @@ SFSDK_USE_DEPRECATED_END
     if (result_set != NULL) {
         const char *csvfile = [[self.dbMgr storeDirectoryForStoreName:@"smartstore.csv"] UTF8String];
         if ((fp = fopen(csvfile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,FreeMemory\n");
             for (cql_int32 i = 0; i < dump_perf_result_count(result_set); ++i) {
-                fprintf(fp, "%lld,%s,%d,%d\n",
+                fprintf(fp, "%lld,%s,%d,%d,%lld\n",
                         dump_perf_get_time(result_set, i),
                         dump_perf_get_marker(result_set, i)->ptr,
                         dump_perf_get_payload_size(result_set, i),
-                        dump_perf_get_duration(result_set, i));
+                        dump_perf_get_duration(result_set, i),
+                        dump_perf_get_free_memory(result_set, i));
             }
             (void) fclose(fp);
         }
@@ -2823,13 +2848,14 @@ SFSDK_USE_DEPRECATED_END
     if (result_set2 != NULL) {
         const char *csvfile2 = [[self.dbMgr storeDirectoryForStoreName:@"smartstore-avg.csv"] UTF8String];
         if ((fp = fopen(csvfile2, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,FreeMemory\n");
             for (cql_int32 i = 0; i < dump_perf_average_result_count(result_set2); ++i) {
-                fprintf(fp, "%lld,%s,%d,%.2f\n",
+                fprintf(fp, "%lld,%s,%d,%.2f,%lld\n",
                         dump_perf_average_get_time(result_set2, i),
                         dump_perf_average_get_marker(result_set2, i)->ptr,
                         dump_perf_average_get_payload_size(result_set2, i),
-                        dump_perf_average_get_duration_value(result_set2, i));
+                        dump_perf_average_get_duration_value(result_set2, i),
+                        dump_perf_get_free_memory(result_set, i));
             }
             (void) fclose(fp);
         }
