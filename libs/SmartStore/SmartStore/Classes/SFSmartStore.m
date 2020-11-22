@@ -935,7 +935,7 @@ SFSDK_USE_DEPRECATED_END
     cql_int32 payloadSize = 0;
     if (self.extJSONStream) {
         marker = cql_string_ref_new("ExteralStorage_Stream");
-        payloadSize = [NSJSONSerialization writeJSONObject:soupEntry
+        payloadSize = (cql_int32)[NSJSONSerialization writeJSONObject:soupEntry
                                     toStream:outputStream
                                      options:0
                                        error:&error];
@@ -943,7 +943,7 @@ SFSDK_USE_DEPRECATED_END
         marker = cql_string_ref_new("ExteralStorage_Memory");
         NSData *outData = [NSJSONSerialization dataWithJSONObject:soupEntry options:0 error:&error];
         [outputStream write:[outData bytes] maxLength:[outData length]];
-        payloadSize = [outData length];
+        payloadSize = (cql_int32)[outData length];
     }
 
     // NSJSONSerialization:writeJSONObject returns the number of bytes written
@@ -1561,7 +1561,7 @@ SFSDK_USE_DEPRECATED_END
     _extJSONMemory = [soupSpec.features containsObject:@"extJSONMemory"];
     _smartStoreSFJSONUtils = [soupSpec.features containsObject:@"smartStoreSFJSONUtils"];
     _smartStoreNSJSONSerialize = [soupSpec.features containsObject:@"smartStoreNSJSONSerialize"];
-    _rawSQLite = [soupSpec.features containsObject:@"rawSQLite"];
+    _rawSQLite = [soupSpec.features containsObject:@"rawSqlite"];
 
     BOOL soupUsesJSON1 = [SFSoupIndex hasJSON1:indexSpecs];
     if (soupUsesExternalStorage && soupUsesJSON1) {
@@ -2246,7 +2246,7 @@ SFSDK_USE_DEPRECATED_END
         } else if (self.smartStoreNSJSONSerialize) {
             marker = cql_string_ref_new("SmartStore_NSJSONSerialization");
         }
-        cql_int32 payloadSize = [self roundSize: [rawJson length] / 1024];
+        cql_int32 payloadSize = (cql_int32)[self roundSize: [rawJson length] / 1024];
         (void) add_marker(perfdb,
                           (cql_int64) [self timeInMilliseconds],
                           marker,
