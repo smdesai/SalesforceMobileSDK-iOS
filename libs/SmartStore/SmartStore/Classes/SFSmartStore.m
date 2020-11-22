@@ -162,6 +162,9 @@ NSUInteger CACHES_COUNT_LIMIT = 1024;
     unsigned long mem_free = vm_stat.free_count * pagesize;
     return mem_free;
 }
+-(NSInteger)roundSize:(NSInteger)payload {
+    return round(payload / 100) * 100;
+}
 
 + (void)initialize
 {
@@ -929,7 +932,7 @@ SFSDK_USE_DEPRECATED_END
     NSInteger startExternalWrite = [self timeInMilliseconds];
 
     cql_string_ref marker = NULL;
-    cql_int32 payloadSize;
+    cql_int32 payloadSize = 0;
     if (self.extJSONStream) {
         marker = cql_string_ref_new("ExteralStorage_Stream");
         payloadSize = [NSJSONSerialization writeJSONObject:soupEntry
@@ -951,7 +954,7 @@ SFSDK_USE_DEPRECATED_END
     (void) add_marker(perfdb,
                       (cql_int64) [self timeInMilliseconds],
                       marker,
-                      payloadSize / 1024,
+                      [self roundSize: payloadSize / 1024],
                       (cql_int32) externalWriteDelta,
                       [self freeMemory]);
     cql_string_release(marker);
@@ -2173,7 +2176,7 @@ SFSDK_USE_DEPRECATED_END
 
         NSInteger rawDbWriteDelta = [self timeInMilliseconds] - rawDbWriteTime;
 
-        cql_int32 payloadSize = [rawJson length] / 1024;
+        cql_int32 payloadSize = [self roundSize: [rawJson length] / 1024];
         cql_string_ref marker = cql_string_ref_new("SQLite");
         (void) add_marker(perfdb,
                           (cql_int64) [self timeInMilliseconds],
@@ -2243,7 +2246,7 @@ SFSDK_USE_DEPRECATED_END
         } else if (self.smartStoreNSJSONSerialize) {
             marker = cql_string_ref_new("SmartStore_NSJSONSerialization");
         }
-        cql_int32 payloadSize = [rawJson length] / 1024;
+        cql_int32 payloadSize = [self roundSize: [rawJson length] / 1024];
         (void) add_marker(perfdb,
                           (cql_int64) [self timeInMilliseconds],
                           marker,
