@@ -157,8 +157,6 @@ NS_SWIFT_NAME(SmartStore)
 @property (nonatomic, readonly) BOOL smartStoreNSJSONSerialize NS_SWIFT_NAME(smartStoreNSJSONSerialize);
 @property (nonatomic, readonly) BOOL rawSQLite NS_SWIFT_NAME(rawSQLite);
 
-@property (nonatomic, readonly) NSInteger payloadSize NS_SWIFT_NAME(payloadSize);
-
 
 /**
  The name of this store.

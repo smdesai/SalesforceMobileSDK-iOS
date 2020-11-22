@@ -929,9 +929,10 @@ SFSDK_USE_DEPRECATED_END
     NSInteger startExternalWrite = [self timeInMilliseconds];
 
     cql_string_ref marker = NULL;
+    cql_int32 payloadSize;
     if (self.extJSONStream) {
         marker = cql_string_ref_new("ExteralStorage_Stream");
-        [NSJSONSerialization writeJSONObject:soupEntry
+        payloadSize = [NSJSONSerialization writeJSONObject:soupEntry
                                     toStream:outputStream
                                      options:0
                                        error:&error];
@@ -939,6 +940,7 @@ SFSDK_USE_DEPRECATED_END
         marker = cql_string_ref_new("ExteralStorage_Memory");
         NSData *outData = [NSJSONSerialization dataWithJSONObject:soupEntry options:0 error:&error];
         [outputStream write:[outData bytes] maxLength:[outData length]];
+        payloadSize = [outData length];
     }
 
     // NSJSONSerialization:writeJSONObject returns the number of bytes written
@@ -949,7 +951,7 @@ SFSDK_USE_DEPRECATED_END
     (void) add_marker(perfdb,
                       (cql_int64) [self timeInMilliseconds],
                       marker,
-                      (cql_int32) self.payloadSize,
+                      payloadSize / 1024,
                       (cql_int32) externalWriteDelta,
                       [self freeMemory]);
     cql_string_release(marker);
@@ -1557,7 +1559,6 @@ SFSDK_USE_DEPRECATED_END
     _smartStoreSFJSONUtils = [soupSpec.features containsObject:@"smartStoreSFJSONUtils"];
     _smartStoreNSJSONSerialize = [soupSpec.features containsObject:@"smartStoreNSJSONSerialize"];
     _rawSQLite = [soupSpec.features containsObject:@"rawSQLite"];
-    _payloadSize = [soupSpec.features[0] intValue];
 
     BOOL soupUsesJSON1 = [SFSoupIndex hasJSON1:indexSpecs];
     if (soupUsesExternalStorage && soupUsesJSON1) {
@@ -2172,11 +2173,12 @@ SFSDK_USE_DEPRECATED_END
 
         NSInteger rawDbWriteDelta = [self timeInMilliseconds] - rawDbWriteTime;
 
+        cql_int32 payloadSize = [rawJson length] / 1024;
         cql_string_ref marker = cql_string_ref_new("SQLite");
         (void) add_marker(perfdb,
                           (cql_int64) [self timeInMilliseconds],
                           cql_string_ref_new("SQLite"),
-                          (cql_int32) self.payloadSize,
+                          payloadSize,
                           (cql_int32) rawDbWriteDelta,
                           [self freeMemory]);
         cql_string_release(marker);
@@ -2210,10 +2212,9 @@ SFSDK_USE_DEPRECATED_END
                                    nowVal, CREATED_COL,
                                    nowVal, LAST_MODIFIED_COL,
                                    nil];
+    NSString *rawJson = nil;
     if (!soupUsesExternalStorage) {
         //now update the SOUP_COL (raw json) for the soup entry
-
-        NSString *rawJson = nil;
         if (self.smartStoreSFJSONUtils) {
             rawJson = [SFJsonUtils JSONRepresentation:mutableEntry];
         } else if (self.smartStoreNSJSONSerialize) {
@@ -2242,10 +2243,11 @@ SFSDK_USE_DEPRECATED_END
         } else if (self.smartStoreNSJSONSerialize) {
             marker = cql_string_ref_new("SmartStore_NSJSONSerialization");
         }
+        cql_int32 payloadSize = [rawJson length] / 1024;
         (void) add_marker(perfdb,
                           (cql_int64) [self timeInMilliseconds],
                           marker,
-                          (cql_int32) self.payloadSize,
+                          (cql_int32) payloadSize,
                           (cql_int32) smartStoreWriteDelta,
                           [self freeMemory]);
         cql_string_release(marker);
