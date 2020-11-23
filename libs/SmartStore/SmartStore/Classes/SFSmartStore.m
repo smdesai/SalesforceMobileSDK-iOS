@@ -161,7 +161,7 @@ NSUInteger CACHES_COUNT_LIMIT = 1024;
 ////    unsigned long mem_total = mem_used + mem_free;
 //    unsigned long mem_free = vm_stat.free_count * pagesize;
 //    return mem_free;
-    
+
     task_vm_info_data_t info;
     mach_msg_type_number_t size = TASK_VM_INFO_COUNT;
     kern_return_t kerr = task_info(mach_task_self(),
@@ -2337,7 +2337,7 @@ SFSDK_USE_DEPRECATED_END
         [self updateTable:[NSString stringWithFormat:@"%@_fts", soupTableName] values:ftsValues entryId:entryId idCol:ROWID_COL withDb:db];
         SFSDK_USE_DEPRECATED_END
     }
-    
+
     return (self.upsertReturn) ? mutableEntry : @{@"entry":@"ok" };
 }
 
@@ -2839,13 +2839,13 @@ SFSDK_USE_DEPRECATED_END
     remove(allDataFile);
     remove(durationFile);
     remove(memDeltaFile);
-    
+
     (void) print_perf(perfdb);
 
     (void) dump_perf_fetch_results(perfdb, &result_set);
     if (result_set != NULL) {
         if ((fp = fopen(allDataFile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse,UpsertReturns\n");
             for (cql_int32 i = 0; i < dump_perf_result_count(result_set); ++i) {
                 fprintf(fp, "%lld,%s,%d,%d,%lld,%d\n",
                         dump_perf_get_time(result_set, i),
@@ -2863,7 +2863,7 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_average_fetch_results(perfdb, &result_set2);
     if (result_set2 != NULL) {
         if ((fp = fopen(durationFile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse,NoUpsertReturn\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse,UpsertReturns\n");
             for (cql_int32 i = 0; i < dump_perf_average_result_count(result_set2); ++i) {
                 fprintf(fp, "%lld,%s,%d,%.2f,%lld,%d\n",
                         dump_perf_average_get_time(result_set2, i),
@@ -2877,11 +2877,11 @@ SFSDK_USE_DEPRECATED_END
         }
         cql_result_set_release(result_set2);
     }
-    
+
     (void) dump_perf_memory_delta_fetch_results(perfdb, &result_set3);
      if (result_set3 != NULL) {
          if ((fp = fopen(memDeltaFile, "w")) != NULL) {
-             fprintf(fp, "Time,Marker,PayloadSize,MemoryDelta,NoUpsertReturn\n");
+             fprintf(fp, "Time,Marker,PayloadSize,MemoryInUseDelta,UpsertReturns\n");
              for (cql_int32 i = 0; i < dump_perf_memory_delta_result_count(result_set3); ++i) {
                  fprintf(fp, "%lld,%s,%d,%d,%lld,%d\n",
                          dump_perf_memory_delta_get_time(result_set3, i),
