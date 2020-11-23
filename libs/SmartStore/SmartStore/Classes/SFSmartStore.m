@@ -161,7 +161,7 @@ NSUInteger CACHES_COUNT_LIMIT = 1024;
 ////    unsigned long mem_total = mem_used + mem_free;
 //    unsigned long mem_free = vm_stat.free_count * pagesize;
 //    return mem_free;
-
+    
     task_vm_info_data_t info;
     mach_msg_type_number_t size = TASK_VM_INFO_COUNT;
     kern_return_t kerr = task_info(mach_task_self(),
@@ -1574,8 +1574,7 @@ SFSDK_USE_DEPRECATED_END
 
     _extJSONStream = [soupSpec.features containsObject:@"extJSONStream"];
     _extJSONMemory = [soupSpec.features containsObject:@"extJSONMemory"];
-    _smartStoreSFJSONUtils = [soupSpec.features containsObject:@"smartStoreSFJSONUtils"];
-    _smartStoreNSJSONSerialize = [soupSpec.features containsObject:@"smartStoreNSJSONSerialize"];
+    _smartStore = [soupSpec.features containsObject:@"smartStore"];
     _rawSQLite = [soupSpec.features containsObject:@"rawSqlite"];
 
     BOOL soupUsesJSON1 = [SFSoupIndex hasJSON1:indexSpecs];
@@ -2233,17 +2232,7 @@ SFSDK_USE_DEPRECATED_END
     NSString *rawJson = nil;
     if (!soupUsesExternalStorage) {
         //now update the SOUP_COL (raw json) for the soup entry
-        if (self.smartStoreSFJSONUtils) {
-            rawJson = [SFJsonUtils JSONRepresentation:mutableEntry];
-        } else if (self.smartStoreNSJSONSerialize) {
-            NSError *error;
-            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:mutableEntry
-                                    options:0
-                                    error:&error];
-            rawJson = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-        } else {
-            assert(false);
-        }
+        rawJson = [SFJsonUtils JSONRepresentation:mutableEntry];
         values[SOUP_COL] = rawJson;
     }
 
@@ -2255,12 +2244,7 @@ SFSDK_USE_DEPRECATED_END
 
     NSInteger smartStoreWriteDelta = [self timeInMilliseconds] - startSmartStoreWrite;
     if (!soupUsesExternalStorage) {
-        cql_string_ref marker = NULL;
-        if (self.smartStoreSFJSONUtils) {
-            marker = cql_string_ref_new("SmartStore_SFJSonUtils");
-        } else if (self.smartStoreNSJSONSerialize) {
-            marker = cql_string_ref_new("SmartStore_NSJSONSerialization");
-        }
+        cql_string_ref marker = cql_string_ref_new("SmartStore");
         cql_int32 payloadSize = (cql_int32)[self roundSize: [rawJson length] / 1024];
         (void) add_marker(perfdb,
                           (cql_int64) [self timeInMilliseconds],
@@ -2852,7 +2836,7 @@ SFSDK_USE_DEPRECATED_END
     remove(allDataFile);
     remove(durationFile);
     remove(memDeltaFile);
-
+    
     (void) print_perf(perfdb);
 
     (void) dump_perf_fetch_results(perfdb, &result_set);
@@ -2888,7 +2872,7 @@ SFSDK_USE_DEPRECATED_END
         }
         cql_result_set_release(result_set2);
     }
-
+    
     (void) dump_perf_memory_delta_fetch_results(perfdb, &result_set3);
      if (result_set3 != NULL) {
          if ((fp = fopen(memDeltaFile, "w")) != NULL) {

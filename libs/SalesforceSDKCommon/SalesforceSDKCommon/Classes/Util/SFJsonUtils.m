@@ -64,9 +64,9 @@ static NSError *sLastError = nil;
 
 + (NSString*)JSONRepresentation:(id)obj {
     NSJSONWritingOptions options = 0;
-#ifdef DEBUG
-    options = NSJSONWritingPrettyPrinted;
-#endif
+//#ifdef DEBUG
+//    options = NSJSONWritingPrettyPrinted;
+//#endif
     return [SFJsonUtils JSONRepresentation:obj options:options];
 }
 
@@ -83,9 +83,9 @@ static NSError *sLastError = nil;
 
 +(NSData*)JSONDataRepresentation:(id)obj {
     NSJSONWritingOptions options = 0;
-#ifdef DEBUG
-    options = NSJSONWritingPrettyPrinted;
-#endif
+//#ifdef DEBUG
+//    options = NSJSONWritingPrettyPrinted;
+//#endif
     return [SFJsonUtils JSONDataRepresentation:obj options:options];
 }
 
