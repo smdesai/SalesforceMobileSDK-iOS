@@ -969,9 +969,10 @@ SFSDK_USE_DEPRECATED_END
     (void) add_marker(perfdb,
                       (cql_int64) [self timeInMilliseconds],
                       marker,
-                      [self roundSize: payloadSize / 1024],
+                      (cql_int32) [self roundSize: payloadSize / 1024],
                       (cql_int32) externalWriteDelta,
-                      [self memoryInuse]);
+                      [self memoryInuse],
+                      self.upsertReturn);
     cql_string_release(marker);
 
     if (error) {
@@ -1576,6 +1577,7 @@ SFSDK_USE_DEPRECATED_END
     _extJSONMemory = [soupSpec.features containsObject:@"extJSONMemory"];
     _smartStore = [soupSpec.features containsObject:@"smartStore"];
     _rawSQLite = [soupSpec.features containsObject:@"rawSqlite"];
+    _upsertReturn = [soupSpec.features containsObject:@"upsertReturn"];
 
     BOOL soupUsesJSON1 = [SFSoupIndex hasJSON1:indexSpecs];
     if (soupUsesExternalStorage && soupUsesJSON1) {
@@ -2190,17 +2192,18 @@ SFSDK_USE_DEPRECATED_END
 
         NSInteger rawDbWriteDelta = [self timeInMilliseconds] - rawDbWriteTime;
 
-        cql_int32 payloadSize = [self roundSize: [rawJson length] / 1024];
+        cql_int32 payloadSize = (cql_int32)[self roundSize: [rawJson length] / 1024];
         cql_string_ref marker = cql_string_ref_new("SQLite");
         (void) add_marker(perfdb,
                           (cql_int64) [self timeInMilliseconds],
                           cql_string_ref_new("SQLite"),
                           payloadSize,
                           (cql_int32) rawDbWriteDelta,
-                          [self memoryInuse]);
+                          [self memoryInuse],
+                          self.upsertReturn);
         cql_string_release(marker);
 
-        return entry;
+        return (self.upsertReturn) ? entry : @{@"entry":@"ok" };
     }
 
     // TODO: instrument -sd-
@@ -2251,7 +2254,8 @@ SFSDK_USE_DEPRECATED_END
                           marker,
                           (cql_int32) payloadSize,
                           (cql_int32) smartStoreWriteDelta,
-                          [self memoryInuse]);
+                          [self memoryInuse],
+                          self.upsertReturn);
         cql_string_release(marker);
     }
 
@@ -2277,8 +2281,7 @@ SFSDK_USE_DEPRECATED_END
         [self projectIndexedPaths:entry values:ftsValues indices:indices typeFilter:kValueExtractedToFtsColumn];
         [self insertIntoTable:[NSString stringWithFormat:@"%@_fts", soupTableName] values:ftsValues withDb:db];
     }
-
-    return mutableEntry;
+    return (self.upsertReturn) ? mutableEntry : @{@"entry":@"ok" };
 }
 
 
@@ -2334,8 +2337,8 @@ SFSDK_USE_DEPRECATED_END
         [self updateTable:[NSString stringWithFormat:@"%@_fts", soupTableName] values:ftsValues entryId:entryId idCol:ROWID_COL withDb:db];
         SFSDK_USE_DEPRECATED_END
     }
-
-    return mutableEntry;
+    
+    return (self.upsertReturn) ? mutableEntry : @{@"entry":@"ok" };
 }
 
 
@@ -2844,12 +2847,13 @@ SFSDK_USE_DEPRECATED_END
         if ((fp = fopen(allDataFile, "w")) != NULL) {
             fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse\n");
             for (cql_int32 i = 0; i < dump_perf_result_count(result_set); ++i) {
-                fprintf(fp, "%lld,%s,%d,%d,%lld\n",
+                fprintf(fp, "%lld,%s,%d,%d,%lld,%d\n",
                         dump_perf_get_time(result_set, i),
                         dump_perf_get_marker(result_set, i)->ptr,
                         dump_perf_get_payload_size(result_set, i),
                         dump_perf_get_duration(result_set, i),
-                        dump_perf_get_memory_used(result_set, i));
+                        dump_perf_get_memory_used(result_set, i),
+                        dump_perf_get_upsert_returns(result_set, i));
             }
             (void) fclose(fp);
         }
@@ -2859,14 +2863,15 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_average_fetch_results(perfdb, &result_set2);
     if (result_set2 != NULL) {
         if ((fp = fopen(durationFile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse,NoUpsertReturn\n");
             for (cql_int32 i = 0; i < dump_perf_average_result_count(result_set2); ++i) {
-                fprintf(fp, "%lld,%s,%d,%.2f,%lld\n",
+                fprintf(fp, "%lld,%s,%d,%.2f,%lld,%d\n",
                         dump_perf_average_get_time(result_set2, i),
                         dump_perf_average_get_marker(result_set2, i)->ptr,
                         dump_perf_average_get_payload_size(result_set2, i),
                         dump_perf_average_get_duration_value(result_set2, i),
-                        dump_perf_average_get_memory_used(result_set2, i));
+                        dump_perf_average_get_memory_used(result_set2, i),
+                        dump_perf_average_get_upsert_returns(result_set2, i));
             }
             (void) fclose(fp);
         }
@@ -2876,13 +2881,15 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_memory_delta_fetch_results(perfdb, &result_set3);
      if (result_set3 != NULL) {
          if ((fp = fopen(memDeltaFile, "w")) != NULL) {
-             fprintf(fp, "Time,Marker,PayloadSize,MemoryDelta\n");
+             fprintf(fp, "Time,Marker,PayloadSize,MemoryDelta,NoUpsertReturn\n");
              for (cql_int32 i = 0; i < dump_perf_memory_delta_result_count(result_set3); ++i) {
-                 fprintf(fp,"%lld,%s,%d,%lld\n",
+                 fprintf(fp, "%lld,%s,%d,%d,%lld,%d\n",
                          dump_perf_memory_delta_get_time(result_set3, i),
                          dump_perf_memory_delta_get_marker(result_set3, i)->ptr,
                          dump_perf_memory_delta_get_payload_size(result_set3, i),
-                         dump_perf_memory_delta_get_memory_delta_value(result_set3, i));
+                         dump_perf_memory_delta_get_duration(result_set3, i),
+                         dump_perf_memory_delta_get_memory_delta_value(result_set3, i),
+                         dump_perf_memory_delta_get_upsert_returns(result_set3, i));
              }
              (void) fclose(fp);
          }

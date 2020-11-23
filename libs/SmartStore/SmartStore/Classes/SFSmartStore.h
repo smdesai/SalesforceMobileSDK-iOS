@@ -153,10 +153,9 @@ NS_SWIFT_NAME(SmartStore)
 
 @property (nonatomic, readonly) BOOL extJSONStream NS_SWIFT_NAME(extJSONStream);
 @property (nonatomic, readonly) BOOL extJSONMemory NS_SWIFT_NAME(extJSONMemory);
-@property (nonatomic, readonly) BOOL smartStoreSFJSONUtils NS_SWIFT_NAME(smartStoreSFJSONUtils);
-@property (nonatomic, readonly) BOOL smartStoreNSJSONSerialize NS_SWIFT_NAME(smartStoreNSJSONSerialize);
+@property (nonatomic, readonly) BOOL smartStore NS_SWIFT_NAME(smartStore);
 @property (nonatomic, readonly) BOOL rawSQLite NS_SWIFT_NAME(rawSQLite);
-
+@property (nonatomic, readonly) BOOL upsertReturn NS_SWIFT_NAME(upsertReturn);
 
 /**
  The name of this store.

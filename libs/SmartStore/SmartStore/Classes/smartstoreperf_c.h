@@ -10,7 +10,7 @@ extern CQL_WARN_UNUSED cql_code dump_perf(sqlite3 *_Nonnull _db_, sqlite3_stmt *
 extern CQL_WARN_UNUSED cql_code dump_perf_average(sqlite3 *_Nonnull _db_, sqlite3_stmt *_Nullable *_Nonnull _result_);
 extern CQL_WARN_UNUSED cql_code dump_perf_memory_delta(sqlite3 *_Nonnull _db_, sqlite3_stmt *_Nullable *_Nonnull _result_);
 
-// Generated from smartstoreperf.sql:11
+// Generated from smartstoreperf.sql:12
 
 /*
 CREATE PROC create_perf_table ()
@@ -20,7 +20,8 @@ BEGIN
     marker TEXT NOT NULL,
     payload_size INTEGER NOT NULL,
     duration INTEGER NOT NULL,
-    memory_used LONG_INT NOT NULL
+    memory_used LONG_INT NOT NULL,
+    upsert_returns INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_time ON perf (time);
 END;
@@ -36,7 +37,8 @@ CQL_WARN_UNUSED cql_code create_perf_table(sqlite3 *_Nonnull _db_) {
       "marker TEXT NOT NULL, "
       "payload_size INTEGER NOT NULL, "
       "duration INTEGER NOT NULL, "
-      "memory_used LONG_INT NOT NULL "
+      "memory_used LONG_INT NOT NULL, "
+      "upsert_returns INTEGER NOT NULL "
     ")");
   if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
   _rc_ = cql_exec(_db_,
@@ -48,7 +50,7 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:16
+// Generated from smartstoreperf.sql:17
 
 /*
 CREATE PROC reset_perf_table ()
@@ -70,29 +72,30 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:26
+// Generated from smartstoreperf.sql:31
 
 /*
-CREATE PROC add_marker (time_ LONG_INT NOT NULL, marker_ TEXT NOT NULL, payload_size_ INTEGER NOT NULL, duration_ INTEGER NOT NULL, memory_used_ LONG_INT NOT NULL)
+CREATE PROC add_marker (time_ LONG_INT NOT NULL, marker_ TEXT NOT NULL, payload_size_ INTEGER NOT NULL, duration_ INTEGER NOT NULL, memory_used_ LONG_INT NOT NULL, upsert_returns_ INTEGER NOT NULL)
 BEGIN
-  INSERT INTO perf(time, marker, payload_size, duration, memory_used) VALUES(time_, marker_, payload_size_, duration_, memory_used_);
+  INSERT INTO perf(time, marker, payload_size, duration, memory_used, upsert_returns) VALUES(time_, marker_, payload_size_, duration_, memory_used_, upsert_returns_);
 END;
 */
 
 #undef _PROC_
 #define _PROC_ "add_marker"
-CQL_WARN_UNUSED cql_code add_marker(sqlite3 *_Nonnull _db_, cql_int64 time_, cql_string_ref _Nonnull marker_, cql_int32 payload_size_, cql_int32 duration_, cql_int64 memory_used_) {
+CQL_WARN_UNUSED cql_code add_marker(sqlite3 *_Nonnull _db_, cql_int64 time_, cql_string_ref _Nonnull marker_, cql_int32 payload_size_, cql_int32 duration_, cql_int64 memory_used_, cql_int32 upsert_returns_) {
   cql_code _rc_ = SQLITE_OK;
   sqlite3_stmt *_temp_stmt = NULL;
 
   _rc_ = cql_prepare(_db_, &_temp_stmt,
-    "INSERT INTO perf(time, marker, payload_size, duration, memory_used) VALUES(?, ?, ?, ?, ?)");
-  cql_multibind(&_rc_, _db_, &_temp_stmt, 5,
+    "INSERT INTO perf(time, marker, payload_size, duration, memory_used, upsert_returns) VALUES(?, ?, ?, ?, ?, ?)");
+  cql_multibind(&_rc_, _db_, &_temp_stmt, 6,
                 CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT64, time_,
                 CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_STRING, marker_,
                 CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT32, payload_size_,
                 CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT32, duration_,
-                CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT64, memory_used_);
+                CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT64, memory_used_,
+                CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT32, upsert_returns_);
   if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
   _rc_ = sqlite3_step(_temp_stmt);
   if (_rc_ != SQLITE_DONE) { cql_error_trace(); goto cql_cleanup; }
@@ -104,7 +107,7 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:37
+// Generated from smartstoreperf.sql:43
 
 /*
 CREATE PROC print_perf ()
@@ -114,7 +117,7 @@ BEGIN
   ORDER BY time ASC;
   LOOP FETCH C
   BEGIN
-    CALL printf("%lld,%s,%d,%d,%lld\n", C.time, C.marker, C.payload_size, C.duration, C.memory_used);
+    CALL printf("%lld,%s,%d,%d,%lld,%d\n", C.time, C.marker, C.payload_size, C.duration, C.memory_used, C.upsert_returns);
   END;
   CLOSE C;
 END;
@@ -131,6 +134,7 @@ typedef struct print_perf_C_row {
   cql_int32 payload_size;
   cql_int32 duration;
   cql_int64 memory_used;
+  cql_int32 upsert_returns;
   cql_string_ref _Nonnull marker;
 } print_perf_C_row;
 
@@ -141,23 +145,24 @@ CQL_WARN_UNUSED cql_code print_perf(sqlite3 *_Nonnull _db_) {
   print_perf_C_row C_ = { ._refs_count_ = 1, ._refs_offset_ = print_perf_C_refs_offset };
 
   _rc_ = cql_prepare(_db_, &C,
-    "SELECT time, marker, payload_size, duration, memory_used "
+    "SELECT time, marker, payload_size, duration, memory_used, upsert_returns "
       "FROM perf "
     "ORDER BY time ASC");
   if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
   for (;;) {
     _rc_ = sqlite3_step(C);
     C_._has_row_ = _rc_ == SQLITE_ROW;
-    cql_multifetch(_rc_, C, 5,
+    cql_multifetch(_rc_, C, 6,
                    CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT64, &C_.time,
                    CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_STRING, &C_.marker,
                    CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT32, &C_.payload_size,
                    CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT32, &C_.duration,
-                   CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT64, &C_.memory_used);
+                   CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT64, &C_.memory_used,
+                   CQL_DATA_TYPE_NOT_NULL | CQL_DATA_TYPE_INT32, &C_.upsert_returns);
     if (_rc_ != SQLITE_ROW && _rc_ != SQLITE_DONE) { cql_error_trace(); goto cql_cleanup; }
     if (!C_._has_row_) break;
     cql_alloc_cstr(_cstr_1, C_.marker);
-    printf("%lld,%s,%d,%d,%lld\n", C_.time, _cstr_1, C_.payload_size, C_.duration, C_.memory_used);
+    printf("%lld,%s,%d,%d,%lld,%d\n", C_.time, _cstr_1, C_.payload_size, C_.duration, C_.memory_used, C_.upsert_returns);
     cql_free_cstr(_cstr_1, C_.marker);
   }
   cql_finalize_stmt(&C);
@@ -169,7 +174,7 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:42
+// Generated from smartstoreperf.sql:48
 
 /*
 CREATE PROC dump_perf ()
@@ -191,6 +196,7 @@ typedef struct dump_perf_row {
   cql_int32 payload_size;
   cql_int32 duration;
   cql_int64 memory_used;
+  cql_int32 upsert_returns;
   cql_string_ref _Nonnull marker;
 } dump_perf_row;
 
@@ -219,22 +225,29 @@ cql_int64 dump_perf_get_memory_used(dump_perf_result_set_ref _Nonnull result_set
   return data[row].memory_used;
 }
 
+cql_int32 dump_perf_get_upsert_returns(dump_perf_result_set_ref _Nonnull result_set, cql_int32 row) {
+  dump_perf_row *data = (dump_perf_row *)cql_result_set_get_data((cql_result_set_ref)result_set);
+  return data[row].upsert_returns;
+}
+
 uint8_t dump_perf_data_types[dump_perf_data_types_count] = {
   CQL_DATA_TYPE_INT64 | CQL_DATA_TYPE_NOT_NULL, // time
   CQL_DATA_TYPE_STRING | CQL_DATA_TYPE_NOT_NULL, // marker
   CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // payload_size
   CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // duration
   CQL_DATA_TYPE_INT64 | CQL_DATA_TYPE_NOT_NULL, // memory_used
+  CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // upsert_returns
 };
 
 #define dump_perf_refs_offset cql_offsetof(dump_perf_row, marker) // count = 1
 
-static cql_uint16 dump_perf_col_offsets[] = { 5,
+static cql_uint16 dump_perf_col_offsets[] = { 6,
   cql_offsetof(dump_perf_row, time),
   cql_offsetof(dump_perf_row, marker),
   cql_offsetof(dump_perf_row, payload_size),
   cql_offsetof(dump_perf_row, duration),
-  cql_offsetof(dump_perf_row, memory_used)
+  cql_offsetof(dump_perf_row, memory_used),
+  cql_offsetof(dump_perf_row, upsert_returns)
 };
 
 cql_int32 dump_perf_result_count(dump_perf_result_set_ref _Nonnull result_set) {
@@ -264,7 +277,7 @@ CQL_WARN_UNUSED cql_code dump_perf(sqlite3 *_Nonnull _db_, sqlite3_stmt *_Nullab
   cql_code _rc_ = SQLITE_OK;
   *_result_ = NULL;
   _rc_ = cql_prepare(_db_, _result_,
-    "SELECT time, marker, payload_size, duration, memory_used "
+    "SELECT time, marker, payload_size, duration, memory_used, upsert_returns "
       "FROM perf "
     "ORDER BY time ASC");
   if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
@@ -275,12 +288,12 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:47
+// Generated from smartstoreperf.sql:55
 
 /*
 CREATE PROC dump_perf_average ()
 BEGIN
-  SELECT time, marker, payload_size, avg(duration), memory_used
+  SELECT time, marker, payload_size, avg(duration), memory_used, upsert_returns
     FROM perf
     GROUP BY marker, payload_size
   ORDER BY time ASC;
@@ -298,6 +311,7 @@ typedef struct dump_perf_average_row {
   cql_int32 payload_size;
   cql_nullable_double duration;
   cql_int64 memory_used;
+  cql_int32 upsert_returns;
   cql_string_ref _Nonnull marker;
 } dump_perf_average_row;
 
@@ -331,22 +345,29 @@ cql_int64 dump_perf_average_get_memory_used(dump_perf_average_result_set_ref _No
   return data[row].memory_used;
 }
 
+cql_int32 dump_perf_average_get_upsert_returns(dump_perf_average_result_set_ref _Nonnull result_set, cql_int32 row) {
+  dump_perf_average_row *data = (dump_perf_average_row *)cql_result_set_get_data((cql_result_set_ref)result_set);
+  return data[row].upsert_returns;
+}
+
 uint8_t dump_perf_average_data_types[dump_perf_average_data_types_count] = {
   CQL_DATA_TYPE_INT64 | CQL_DATA_TYPE_NOT_NULL, // time
   CQL_DATA_TYPE_STRING | CQL_DATA_TYPE_NOT_NULL, // marker
   CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // payload_size
   CQL_DATA_TYPE_DOUBLE, // duration
   CQL_DATA_TYPE_INT64 | CQL_DATA_TYPE_NOT_NULL, // memory_used
+  CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // upsert_returns
 };
 
 #define dump_perf_average_refs_offset cql_offsetof(dump_perf_average_row, marker) // count = 1
 
-static cql_uint16 dump_perf_average_col_offsets[] = { 5,
+static cql_uint16 dump_perf_average_col_offsets[] = { 6,
   cql_offsetof(dump_perf_average_row, time),
   cql_offsetof(dump_perf_average_row, marker),
   cql_offsetof(dump_perf_average_row, payload_size),
   cql_offsetof(dump_perf_average_row, duration),
-  cql_offsetof(dump_perf_average_row, memory_used)
+  cql_offsetof(dump_perf_average_row, memory_used),
+  cql_offsetof(dump_perf_average_row, upsert_returns)
 };
 
 cql_int32 dump_perf_average_result_count(dump_perf_average_result_set_ref _Nonnull result_set) {
@@ -376,7 +397,7 @@ CQL_WARN_UNUSED cql_code dump_perf_average(sqlite3 *_Nonnull _db_, sqlite3_stmt 
   cql_code _rc_ = SQLITE_OK;
   *_result_ = NULL;
   _rc_ = cql_prepare(_db_, _result_,
-    "SELECT time, marker, payload_size, avg(duration), memory_used "
+    "SELECT time, marker, payload_size, avg(duration), memory_used, upsert_returns "
       "FROM perf "
       "GROUP BY marker, payload_size "
     "ORDER BY time ASC");
@@ -388,13 +409,13 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:52
+// Generated from smartstoreperf.sql:63
 
 /*
 CREATE PROC dump_perf_memory_delta ()
 BEGIN
-  SELECT time, marker, payload_size, memory_used - 
-    lag(memory_used, 1) OVER (ORDER BY time) AS memory_delta
+  SELECT time, marker, payload_size, duration, memory_used - 
+    lag(memory_used, 1) OVER (ORDER BY time) AS memory_delta, upsert_returns
     FROM perf
   ORDER BY time ASC;
 END;
@@ -409,7 +430,9 @@ cql_string_literal(dump_perf_memory_delta_stored_procedure_name, "dump_perf_memo
 typedef struct dump_perf_memory_delta_row {
   cql_int64 time;
   cql_int32 payload_size;
+  cql_int32 duration;
   cql_nullable_int64 memory_delta;
+  cql_int32 upsert_returns;
   cql_string_ref _Nonnull marker;
 } dump_perf_memory_delta_row;
 
@@ -428,6 +451,11 @@ cql_int32 dump_perf_memory_delta_get_payload_size(dump_perf_memory_delta_result_
   return data[row].payload_size;
 }
 
+cql_int32 dump_perf_memory_delta_get_duration(dump_perf_memory_delta_result_set_ref _Nonnull result_set, cql_int32 row) {
+  dump_perf_memory_delta_row *data = (dump_perf_memory_delta_row *)cql_result_set_get_data((cql_result_set_ref)result_set);
+  return data[row].duration;
+}
+
 cql_bool dump_perf_memory_delta_get_memory_delta_is_null(dump_perf_memory_delta_result_set_ref _Nonnull result_set, cql_int32 row) {
   dump_perf_memory_delta_row *data = (dump_perf_memory_delta_row *)cql_result_set_get_data((cql_result_set_ref)result_set);
   return data[row].memory_delta.is_null;
@@ -438,20 +466,29 @@ cql_int64 dump_perf_memory_delta_get_memory_delta_value(dump_perf_memory_delta_r
   return data[row].memory_delta.value;
 }
 
+cql_int32 dump_perf_memory_delta_get_upsert_returns(dump_perf_memory_delta_result_set_ref _Nonnull result_set, cql_int32 row) {
+  dump_perf_memory_delta_row *data = (dump_perf_memory_delta_row *)cql_result_set_get_data((cql_result_set_ref)result_set);
+  return data[row].upsert_returns;
+}
+
 uint8_t dump_perf_memory_delta_data_types[dump_perf_memory_delta_data_types_count] = {
   CQL_DATA_TYPE_INT64 | CQL_DATA_TYPE_NOT_NULL, // time
   CQL_DATA_TYPE_STRING | CQL_DATA_TYPE_NOT_NULL, // marker
   CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // payload_size
+  CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // duration
   CQL_DATA_TYPE_INT64, // memory_delta
+  CQL_DATA_TYPE_INT32 | CQL_DATA_TYPE_NOT_NULL, // upsert_returns
 };
 
 #define dump_perf_memory_delta_refs_offset cql_offsetof(dump_perf_memory_delta_row, marker) // count = 1
 
-static cql_uint16 dump_perf_memory_delta_col_offsets[] = { 4,
+static cql_uint16 dump_perf_memory_delta_col_offsets[] = { 6,
   cql_offsetof(dump_perf_memory_delta_row, time),
   cql_offsetof(dump_perf_memory_delta_row, marker),
   cql_offsetof(dump_perf_memory_delta_row, payload_size),
-  cql_offsetof(dump_perf_memory_delta_row, memory_delta)
+  cql_offsetof(dump_perf_memory_delta_row, duration),
+  cql_offsetof(dump_perf_memory_delta_row, memory_delta),
+  cql_offsetof(dump_perf_memory_delta_row, upsert_returns)
 };
 
 cql_int32 dump_perf_memory_delta_result_count(dump_perf_memory_delta_result_set_ref _Nonnull result_set) {
@@ -481,8 +518,8 @@ CQL_WARN_UNUSED cql_code dump_perf_memory_delta(sqlite3 *_Nonnull _db_, sqlite3_
   cql_code _rc_ = SQLITE_OK;
   *_result_ = NULL;
   _rc_ = cql_prepare(_db_, _result_,
-    "SELECT time, marker, payload_size, memory_used -  "
-      "lag(memory_used, 1) OVER (ORDER BY time) "
+    "SELECT time, marker, payload_size, duration, memory_used -  "
+      "lag(memory_used, 1) OVER (ORDER BY time), upsert_returns "
       "FROM perf "
     "ORDER BY time ASC");
   if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
