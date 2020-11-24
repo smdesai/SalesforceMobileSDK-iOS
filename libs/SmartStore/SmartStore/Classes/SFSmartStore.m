@@ -25,6 +25,7 @@
 //required for UIApplicationProtectedDataDidBecomeAvailable
 #import <mach/mach.h>
 #import <mach/mach_host.h>
+#import <os/proc.h>
 
 #import <UIKit/UIKit.h>
 #import "sqlite3.h"
@@ -144,39 +145,28 @@ NSUInteger CACHES_COUNT_LIMIT = 1024;
     sqlite3 *perfdb;
 }
 
+-(long)availableMemory {
+    return os_proc_available_memory();
+}
 
--(NSUInteger) memoryInuse {
-//    vm_size_t pagesize;
-//    vm_statistics_data_t vm_stat;
-//
-//    mach_port_t host_port = mach_host_self();
-//    mach_msg_type_number_t host_size = sizeof(vm_statistics_data_t) / sizeof(integer_t);
-//
-//    host_page_size(host_port, &pagesize);
-//    if (host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &host_size) != KERN_SUCCESS) {
-//        return 0;
-//    }
-//
-////    unsigned long mem_used = (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count) * pagesize;
-////    unsigned long mem_total = mem_used + mem_free;
-//    unsigned long mem_free = vm_stat.free_count * pagesize;
-//    return mem_free;
-
+-(int)usedSizeOfMemory {
     task_vm_info_data_t info;
     mach_msg_type_number_t size = TASK_VM_INFO_COUNT;
-    kern_return_t kerr = task_info(mach_task_self(),
-                                   TASK_VM_INFO,
-                                   (task_info_t)&info,
-                                   &size);
-    if( kerr == KERN_SUCCESS ) {
-        mach_vm_size_t totalSize = info.internal + info.compressed;
-//        NSLog(@"Memory in use (in bytes): %u", totalSize);
-        return totalSize;
-    } else {
-//        NSLog(@"Error with task_info(): %s", mach_error_string(kerr));
+    kern_return_t kerr = task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&info, &size);
+    if (kerr != KERN_SUCCESS) {
         return 0;
     }
+    return (int)info.phys_footprint;
 }
+
+- (long)limitSizeOfMemory {
+    int size = [self usedSizeOfMemory];
+    if (size == 0) {
+        return 0;
+    }
+    return (size + os_proc_available_memory());
+}
+
 -(NSInteger)roundSize:(NSInteger)payload {
     return round(payload / 100) * 100;
 }
@@ -971,7 +961,9 @@ SFSDK_USE_DEPRECATED_END
                       marker,
                       (cql_int32) [self roundSize: payloadSize / 1024],
                       (cql_int32) externalWriteDelta,
-                      [self memoryInuse],
+                      [self usedSizeOfMemory],
+                      [self availableMemory],
+                      [self limitSizeOfMemory],
                       self.upsertReturn);
     cql_string_release(marker);
 
@@ -2199,7 +2191,9 @@ SFSDK_USE_DEPRECATED_END
                           cql_string_ref_new("SQLite"),
                           payloadSize,
                           (cql_int32) rawDbWriteDelta,
-                          [self memoryInuse],
+                          [self usedSizeOfMemory],
+                          [self availableMemory],
+                          [self limitSizeOfMemory],
                           self.upsertReturn);
         cql_string_release(marker);
 
@@ -2254,7 +2248,9 @@ SFSDK_USE_DEPRECATED_END
                           marker,
                           (cql_int32) payloadSize,
                           (cql_int32) smartStoreWriteDelta,
-                          [self memoryInuse],
+                          [self usedSizeOfMemory],
+                          [self availableMemory],
+                          [self limitSizeOfMemory],
                           self.upsertReturn);
         cql_string_release(marker);
     }
@@ -2845,14 +2841,16 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_fetch_results(perfdb, &result_set);
     if (result_set != NULL) {
         if ((fp = fopen(allDataFile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse,UpsertReturns\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsed,MemoryAvailable,MemoryLimit,UpsertReturns\n");
             for (cql_int32 i = 0; i < dump_perf_result_count(result_set); ++i) {
-                fprintf(fp, "%lld,%s,%d,%d,%lld,%d\n",
+                fprintf(fp, "%lld,%s,%d,%d,%lld,%lld,%lld,%d\n",
                         dump_perf_get_time(result_set, i),
                         dump_perf_get_marker(result_set, i)->ptr,
                         dump_perf_get_payload_size(result_set, i),
                         dump_perf_get_duration(result_set, i),
                         dump_perf_get_memory_used(result_set, i),
+                        dump_perf_get_memory_available(result_set, i),
+                        dump_perf_get_memory_limit(result_set, i),
                         dump_perf_get_upsert_returns(result_set, i));
             }
             (void) fclose(fp);
@@ -2863,14 +2861,16 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_average_fetch_results(perfdb, &result_set2);
     if (result_set2 != NULL) {
         if ((fp = fopen(durationFile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryInUse,UpsertReturns\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsed,MemoryAvailable,MemoryLimit,UpsertReturns\n");
             for (cql_int32 i = 0; i < dump_perf_average_result_count(result_set2); ++i) {
-                fprintf(fp, "%lld,%s,%d,%.2f,%lld,%d\n",
+                fprintf(fp, "%lld,%s,%d,%.2f,%lld,%lld,%lld,%d\n",
                         dump_perf_average_get_time(result_set2, i),
                         dump_perf_average_get_marker(result_set2, i)->ptr,
                         dump_perf_average_get_payload_size(result_set2, i),
                         dump_perf_average_get_duration_value(result_set2, i),
                         dump_perf_average_get_memory_used(result_set2, i),
+                        dump_perf_average_get_memory_available(result_set2, i),
+                        dump_perf_average_get_memory_limit(result_set2, i),
                         dump_perf_average_get_upsert_returns(result_set2, i));
             }
             (void) fclose(fp);
@@ -2881,14 +2881,16 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_memory_delta_fetch_results(perfdb, &result_set3);
      if (result_set3 != NULL) {
          if ((fp = fopen(memDeltaFile, "w")) != NULL) {
-             fprintf(fp, "Time,Marker,PayloadSize,MemoryInUseDelta,UpsertReturns\n");
+             fprintf(fp, "Time,Marker,PayloadSize,MemoryUsedDelta,MemoryAvailable,MemoryLimit,UpsertReturns\n");
              for (cql_int32 i = 0; i < dump_perf_memory_delta_result_count(result_set3); ++i) {
-                 fprintf(fp, "%lld,%s,%d,%d,%lld,%d\n",
+                 fprintf(fp, "%lld,%s,%d,%d,%lld,%lld,%lld,%d\n",
                          dump_perf_memory_delta_get_time(result_set3, i),
                          dump_perf_memory_delta_get_marker(result_set3, i)->ptr,
                          dump_perf_memory_delta_get_payload_size(result_set3, i),
                          dump_perf_memory_delta_get_duration(result_set3, i),
                          dump_perf_memory_delta_get_memory_delta_value(result_set3, i),
+                         dump_perf_memory_delta_get_memory_available(result_set3, i),
+                         dump_perf_memory_delta_get_memory_limit(result_set3, i),
                          dump_perf_memory_delta_get_upsert_returns(result_set3, i));
              }
              (void) fclose(fp);
