@@ -321,7 +321,7 @@ CREATE PROC dump_perf_average ()
 BEGIN
   SELECT time, marker, payload_size, avg(duration), memory_used, memory_available, memory_limit, upsert_returns
     FROM perf
-    GROUP BY marker, payload_size
+    GROUP BY marker, payload_size, upsert_returns
   ORDER BY time ASC;
 END;
 */
@@ -441,7 +441,7 @@ CQL_WARN_UNUSED cql_code dump_perf_average(sqlite3 *_Nonnull _db_, sqlite3_stmt 
   _rc_ = cql_prepare(_db_, _result_,
     "SELECT time, marker, payload_size, avg(duration), memory_used, memory_available, memory_limit, upsert_returns "
       "FROM perf "
-      "GROUP BY marker, payload_size "
+      "GROUP BY marker, payload_size, upsert_returns "
     "ORDER BY time ASC");
   if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
   _rc_ = SQLITE_OK;

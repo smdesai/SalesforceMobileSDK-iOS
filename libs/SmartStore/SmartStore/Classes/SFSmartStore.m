@@ -2881,7 +2881,7 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_memory_delta_fetch_results(perfdb, &result_set3);
      if (result_set3 != NULL) {
          if ((fp = fopen(memDeltaFile, "w")) != NULL) {
-             fprintf(fp, "Time,Marker,PayloadSize,MemoryUsedDelta,MemoryAvailable,MemoryLimit,UpsertReturns\n");
+             fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsedDelta,MemoryAvailable,MemoryLimit,UpsertReturns\n");
              for (cql_int32 i = 0; i < dump_perf_memory_delta_result_count(result_set3); ++i) {
                  fprintf(fp, "%lld,%s,%d,%d,%lld,%lld,%lld,%d\n",
                          dump_perf_memory_delta_get_time(result_set3, i),
