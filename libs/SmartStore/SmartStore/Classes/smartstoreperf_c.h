@@ -54,12 +54,13 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:19
+// Generated from smartstoreperf.sql:20
 
 /*
 CREATE PROC reset_perf_table ()
 BEGIN
   DELETE FROM perf;
+  COMMIT TRANSACTION;
 END;
 */
 
@@ -70,13 +71,16 @@ CQL_WARN_UNUSED cql_code reset_perf_table(sqlite3 *_Nonnull _db_) {
   _rc_ = cql_exec(_db_,
     "DELETE FROM perf");
   if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
+  _rc_ = cql_exec(_db_,
+    "COMMIT TRANSACTION");
+  if (_rc_ != SQLITE_OK) { cql_error_trace(); goto cql_cleanup; }
   _rc_ = SQLITE_OK;
 
 cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:37
+// Generated from smartstoreperf.sql:38
 
 /*
 CREATE PROC add_marker (time_ LONG_INT NOT NULL, marker_ TEXT NOT NULL, payload_size_ INTEGER NOT NULL, duration_ INTEGER NOT NULL, memory_used_ LONG_INT NOT NULL, memory_available_ LONG_INT NOT NULL, memory_limit_ LONG_INT NOT NULL, upsert_returns_ INTEGER NOT NULL)
@@ -113,7 +117,7 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:49
+// Generated from smartstoreperf.sql:50
 
 /*
 CREATE PROC print_perf ()
@@ -184,7 +188,7 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:54
+// Generated from smartstoreperf.sql:55
 
 /*
 CREATE PROC dump_perf ()
@@ -314,7 +318,7 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:62
+// Generated from smartstoreperf.sql:63
 
 /*
 CREATE PROC dump_perf_average ()
@@ -451,7 +455,7 @@ cql_cleanup:
   return _rc_;
 }
 
-// Generated from smartstoreperf.sql:70
+// Generated from smartstoreperf.sql:71
 
 /*
 CREATE PROC dump_perf_memory_delta ()

@@ -7,16 +7,16 @@
 // Generated from smartstoreperf.sql:14
 extern CQL_WARN_UNUSED cql_code create_perf_table(sqlite3 *_Nonnull _db_);
 
-// Generated from smartstoreperf.sql:19
+// Generated from smartstoreperf.sql:20
 extern CQL_WARN_UNUSED cql_code reset_perf_table(sqlite3 *_Nonnull _db_);
 
-// Generated from smartstoreperf.sql:37
+// Generated from smartstoreperf.sql:38
 extern CQL_WARN_UNUSED cql_code add_marker(sqlite3 *_Nonnull _db_, cql_int64 time_, cql_string_ref _Nonnull marker_, cql_int32 payload_size_, cql_int32 duration_, cql_int64 memory_used_, cql_int64 memory_available_, cql_int64 memory_limit_, cql_int32 upsert_returns_);
 
-// Generated from smartstoreperf.sql:49
+// Generated from smartstoreperf.sql:50
 extern CQL_WARN_UNUSED cql_code print_perf(sqlite3 *_Nonnull _db_);
 
-// Generated from smartstoreperf.sql:54
+// Generated from smartstoreperf.sql:55
 #define CRC_dump_perf 6475687019409639779L
 
 extern cql_string_ref _Nonnull dump_perf_stored_procedure_name;
@@ -42,7 +42,7 @@ cql_result_set_get_meta((cql_result_set_ref)(rs1))->rowsEqual( \
   (cql_result_set_ref)(rs2), \
   row2)
 
-// Generated from smartstoreperf.sql:62
+// Generated from smartstoreperf.sql:63
 #define CRC_dump_perf_average 516379200630615018L
 
 extern cql_string_ref _Nonnull dump_perf_average_stored_procedure_name;
@@ -69,7 +69,7 @@ cql_result_set_get_meta((cql_result_set_ref)(rs1))->rowsEqual( \
   (cql_result_set_ref)(rs2), \
   row2)
 
-// Generated from smartstoreperf.sql:70
+// Generated from smartstoreperf.sql:71
 #define CRC_dump_perf_memory_delta -2033058614710539756L
 
 extern cql_string_ref _Nonnull dump_perf_memory_delta_stored_procedure_name;

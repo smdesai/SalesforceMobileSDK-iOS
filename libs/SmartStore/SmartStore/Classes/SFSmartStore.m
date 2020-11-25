@@ -2820,6 +2820,14 @@ SFSDK_USE_DEPRECATED_END
 
 -(void) resetPerfDb {
     (void) reset_perf_table(perfdb);
+
+    const char *allDataFile = [[self.dbMgr storeDirectoryForStoreName:@"smartstore.csv"] UTF8String];
+    const char *durationFile = [[self.dbMgr storeDirectoryForStoreName:@"smartstore-duration.csv"] UTF8String];
+    const char *memDeltaFile = [[self.dbMgr storeDirectoryForStoreName:@"smartstore-memory-delta.csv"] UTF8String];
+
+    remove(allDataFile);
+    remove(durationFile);
+    remove(memDeltaFile);
 }
 
 -(void) dumpPerfDb {
