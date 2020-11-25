@@ -159,14 +159,6 @@ NSUInteger CACHES_COUNT_LIMIT = 1024;
     return (int)info.phys_footprint;
 }
 
-- (long)limitSizeOfMemory {
-    int size = [self usedSizeOfMemory];
-    if (size == 0) {
-        return 0;
-    }
-    return (size + os_proc_available_memory());
-}
-
 -(NSInteger)roundSize:(NSInteger)payload {
     return round(payload / 100) * 100;
 }
@@ -963,7 +955,6 @@ SFSDK_USE_DEPRECATED_END
                       (cql_int32) externalWriteDelta,
                       [self usedSizeOfMemory],
                       [self availableMemory],
-                      [self limitSizeOfMemory],
                       self.upsertReturn);
     cql_string_release(marker);
 
@@ -2193,7 +2184,6 @@ SFSDK_USE_DEPRECATED_END
                           (cql_int32) rawDbWriteDelta,
                           [self usedSizeOfMemory],
                           [self availableMemory],
-                          [self limitSizeOfMemory],
                           self.upsertReturn);
         cql_string_release(marker);
 
@@ -2250,7 +2240,6 @@ SFSDK_USE_DEPRECATED_END
                           (cql_int32) smartStoreWriteDelta,
                           [self usedSizeOfMemory],
                           [self availableMemory],
-                          [self limitSizeOfMemory],
                           self.upsertReturn);
         cql_string_release(marker);
     }
@@ -2849,16 +2838,15 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_fetch_results(perfdb, &result_set);
     if (result_set != NULL) {
         if ((fp = fopen(allDataFile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsed,MemoryAvailable,MemoryLimit,UpsertReturns\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsed,MemoryAvailable,UpsertReturns\n");
             for (cql_int32 i = 0; i < dump_perf_result_count(result_set); ++i) {
-                fprintf(fp, "%lld,%s,%d,%d,%lld,%lld,%lld,%d\n",
+                fprintf(fp, "%lld,%s,%d,%d,%lld,%lld,%d\n",
                         dump_perf_get_time(result_set, i),
                         dump_perf_get_marker(result_set, i)->ptr,
                         dump_perf_get_payload_size(result_set, i),
                         dump_perf_get_duration(result_set, i),
                         dump_perf_get_memory_used(result_set, i),
                         dump_perf_get_memory_available(result_set, i),
-                        dump_perf_get_memory_limit(result_set, i),
                         dump_perf_get_upsert_returns(result_set, i));
             }
             (void) fclose(fp);
@@ -2869,16 +2857,15 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_average_fetch_results(perfdb, &result_set2);
     if (result_set2 != NULL) {
         if ((fp = fopen(durationFile, "w")) != NULL) {
-            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsed,MemoryAvailable,MemoryLimit,UpsertReturns\n");
+            fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsed,MemoryAvailable,UpsertReturns\n");
             for (cql_int32 i = 0; i < dump_perf_average_result_count(result_set2); ++i) {
-                fprintf(fp, "%lld,%s,%d,%.2f,%lld,%lld,%lld,%d\n",
+                fprintf(fp, "%lld,%s,%d,%.2f,%lld,%lld,%d\n",
                         dump_perf_average_get_time(result_set2, i),
                         dump_perf_average_get_marker(result_set2, i)->ptr,
                         dump_perf_average_get_payload_size(result_set2, i),
                         dump_perf_average_get_duration_value(result_set2, i),
                         dump_perf_average_get_memory_used(result_set2, i),
                         dump_perf_average_get_memory_available(result_set2, i),
-                        dump_perf_average_get_memory_limit(result_set2, i),
                         dump_perf_average_get_upsert_returns(result_set2, i));
             }
             (void) fclose(fp);
@@ -2889,16 +2876,15 @@ SFSDK_USE_DEPRECATED_END
     (void) dump_perf_memory_delta_fetch_results(perfdb, &result_set3);
      if (result_set3 != NULL) {
          if ((fp = fopen(memDeltaFile, "w")) != NULL) {
-             fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsedDelta,MemoryAvailable,MemoryLimit,UpsertReturns\n");
+             fprintf(fp, "Time,Marker,PayloadSize,Duration,MemoryUsedDelta,MemoryAvailable,UpsertReturns\n");
              for (cql_int32 i = 0; i < dump_perf_memory_delta_result_count(result_set3); ++i) {
-                 fprintf(fp, "%lld,%s,%d,%d,%lld,%lld,%lld,%d\n",
+                 fprintf(fp, "%lld,%s,%d,%d,%lld,%lld,%d\n",
                          dump_perf_memory_delta_get_time(result_set3, i),
                          dump_perf_memory_delta_get_marker(result_set3, i)->ptr,
                          dump_perf_memory_delta_get_payload_size(result_set3, i),
                          dump_perf_memory_delta_get_duration(result_set3, i),
                          dump_perf_memory_delta_get_memory_delta_value(result_set3, i),
                          dump_perf_memory_delta_get_memory_available(result_set3, i),
-                         dump_perf_memory_delta_get_memory_limit(result_set3, i),
                          dump_perf_memory_delta_get_upsert_returns(result_set3, i));
              }
              (void) fclose(fp);
